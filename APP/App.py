@@ -127,8 +127,8 @@ class App:
     def get_mail(self, texto, n_fact, filename):
         mail = self.pedir_mail()
         if mail:
-            from generador_pdf import TablaPDF
-            pdf = TablaPDF(texto, filename=filename, title=f"Factura {n_fact} para {mail}")
+            from generador_pdf import PDFGenerator
+            pdf = PDFGenerator(texto, filename=filename, title=f"Factura {n_fact} para {mail}")
             pdf.generar_pdf()
             from configparser import ConfigParser
             config = ConfigParser()
