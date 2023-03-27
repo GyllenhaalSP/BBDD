@@ -2,9 +2,7 @@
  By GyllenhaalSP mar 2023 @ https://github.com/GyllenhaalSP.
 """
 import os
-
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
+from fpdf import FPDF
 
 
 class PDFGenerator:
@@ -14,15 +12,22 @@ class PDFGenerator:
         self.title = title
 
     def generar_pdf(self):
-        # Generar el contenido del PDF
-        c = canvas.Canvas(self.filename, pagesize=A4)
-        text = c.beginText(20, 800)
-        text.setFont("Helvetica", 10)
-        # text.textLines(self.title)
-        text.textLines(self.data)
-        c.drawText(text)
-        c.showPage()
-        c.save()
+        # Crear objeto FPDF
+        pdf = FPDF()
+        pdf.add_page()
+
+        # Agregar título
+        pdf.set_font("Courier", size=14)
+        pdf.cell(200, 10, txt=self.title, ln=1, align="C")
+
+        # Agregar datos
+        pdf.set_font("Courier", size=9)
+        for row in self.data.split("\n"):
+            print(row)
+            pdf.multi_cell(0, 3, txt=row, align="L")
+
+        # Guardar el PDF
+        pdf.output(self.filename)
 
     def eliminar_pdf(self):
         os.remove(self.filename)
