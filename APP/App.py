@@ -1,12 +1,17 @@
 """
  By GyllenhaalSP mar 2023 @ https://github.com/GyllenhaalSP.
 """
-from conexion import *
-from tkinter import ttk
-from tkinter import messagebox
-from tabulate import tabulate
-import tkinter as tk
+import os
+import re
 import tempfile
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+
+from tabulate import tabulate
+
+from mailer import Mailer
+from conexion import *
 from queries import (
     query_cliente,
     query_dir,
@@ -28,7 +33,7 @@ def conectar():
         conn = Conexion()
         return conn
     except oracledb.DatabaseError:
-        mostrar_popup_bbdd()
+        mostrar_popup_bb_dd()
         return
 
 
@@ -72,18 +77,18 @@ def mostrar_popup_error(tipo):
         messagebox.showerror("Error", f"No se ha encontrado ningún {tipo} con ese número.")
 
 
-def mostrar_popup_bbdd():
+def mostrar_popup_bb_dd():
     messagebox.showerror("Error", "No se ha podido conectar con la base de datos.")
 
 
 class App:
-    def __init__(self, root):
+    def __init__(self, app_root):
         self.menu = None
-        self.root = root
+        self.root = app_root
         self.root.configure(borderwidth=0, highlightthickness=0)
-        root.title("Gestor de pedidos, albaranes y facturas")
-        root.geometry("400x100+100+50")
-        root.resizable(False, False)
+        app_root.title("Gestor de pedidos, albaranes y facturas")
+        app_root.geometry("400x200+100+50")
+        app_root.resizable(False, False)
 
         self.configure_root_grid()
         self.crear_widgets()
@@ -113,11 +118,34 @@ class App:
             boton = ttk.Button(self.root, text=texto, command=comando)
             boton.grid(column=i, row=2, sticky="nsew")
 
+        correo = ttk.Button(self.root, text="Enviar factura por correo electrónico", command=self.enviar_factura)
+        correo.grid(column=0, row=4, columnspan=4, sticky="nsew")
+
         cerrar = ttk.Button(self.root, text="Cerrar", command=self.root.destroy)
-        cerrar.grid(column=0, row=3, columnspan=4, sticky="nsew")
+        cerrar.grid(column=0, row=5, columnspan=4, sticky="nsew")
+
+    def get_mail(self, texto, n_fact, filename):
+        mail = self.pedir_mail()
+        if mail:
+            from generador_pdf import TablaPDF
+            pdf = TablaPDF(texto, filename=filename, title=f"Factura {n_fact} para {mail}")
+            pdf.generar_pdf()
+            from configparser import ConfigParser
+            config = ConfigParser()
+            config.read(os.path.join(application_path, 'config.ini'))
+            send_mail = Mailer('facturasalimentacionchen@gmail.com', config['password']['password'])
+            send_mail.enviar_email(mail, texto, n_fact, filename)
+            pdf.eliminar_pdf()
+            messagebox.showinfo("Información", "Correo enviado correctamente.")
+        else:
+            messagebox.showinfo("Información", "No se ha enviado ningún correo.")
+
+    def enviar_factura(self):
+        self.facturas(True)
 
     def crear_ventana(self, titulo):
         ventana = tk.Toplevel(self.root)
+        ventana.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
         ventana.title(titulo)
         ventana.resizable(False, False)
         texto = tk.Text(ventana)
@@ -146,7 +174,7 @@ class App:
 
             configurar_ventana(ventana, texto, 400, 650, 600, 25)
         except oracledb.DatabaseError:
-            mostrar_popup_bbdd()
+            mostrar_popup_bb_dd()
         finally:
             conn.desconectar()
 
@@ -230,11 +258,14 @@ class App:
         finally:
             conn.desconectar()
 
-    def facturas(self):
+    def facturas(self, mail=False):
         conn = conectar()
+        if mail:
+            messagebox.showinfo("Facturas", "Introducir el número de factura y seguidamente el mail.")
         factura = self.pedir_input("Factura", "F")
         ventana, texto = self.crear_ventana("Factura")
         self.configurar_menu_contextual(ventana, texto)
+
         try:
             consulta = f"""SELECT CF.N_FACT, CA.N_ALB, TO_CHAR(FECHA_FACT, 'dd/mm/yyyy') 
             FROM CAB_FACT CF, CAB_ALB CA
@@ -277,9 +308,15 @@ class App:
             results = ejecutar_consulta(conn, consulta)
             archivo = generar_archivo(archivo, results, ['TOTAL', 'TOTAL CON IVA'], colalign=("right", "right"))
 
+
             abrir_archivo(archivo, texto)
 
             configurar_ventana(ventana, texto, 800, 700, 550, 50)
+
+            if mail:
+                self.get_mail(archivo, factura, f"Factura {factura}.pdf")
+                ventana.destroy()
+
         except IndexError:
             ventana.destroy()
             mostrar_popup_error("factura")
@@ -294,15 +331,16 @@ class App:
 
         # Crear nueva ventana para ingresar el número de pedido
         ventana_input = tk.Toplevel(self.root)
+        ventana_input.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
         ventana_input.title("Datos de la búsqueda")
         ventana_input.resizable(False, False)
         ventana_input.geometry(f"{300}x{60}+{100}+{50}")
 
         num = tk.StringVar()
 
-        #
-        label_input = ttk.Label(ventana_input, text=f"   Introducir número de {tipo_busqueda} (XXX): ")
-        label_input.grid(column=0, row=0)
+        # Crear label y entry para el número de pedido
+        label_input = ttk.Label(ventana_input, text=f"Introducir número de {tipo_busqueda} (XXX): ")
+        label_input.grid(column=0, row=0, padx=5, pady=5)
 
         entry_input = tk.Entry(ventana_input,
                                width=len(f"Introducir número de {tipo_busqueda} (XXX): ") - 10)
@@ -317,8 +355,64 @@ class App:
 
         return f"{num.get()}-{letra}"
 
+    def pedir_mail(self):
+        # Función para obtener el mail introducido en el entry
+        def get_entry_data():
+            mail.set(entry_input.get())
+            if self.validar_mail(mail.get()):
+                messagebox.showinfo("Confirmación", "Pulsa aceptar para enviar el correo.")
+                ventana_input.destroy()
+            else:
+                messagebox.showerror("Error", "La dirección de correo no es válida")
+                ventana_input.destroy()
+
+        # Crear nueva ventana para ingresar el número de pedido
+        ventana_input = tk.Toplevel(self.root)
+        ventana_input.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
+        ventana_input.title("Introducir dirección de correo electrónico: ")
+        ventana_input.resizable(False, False)
+        ventana_input.geometry(f"{400}x{60}+{100}+{50}")
+
+        mail = tk.StringVar()
+
+        # Crear label y entry para el mail
+        label_input = ttk.Label(ventana_input, text="Introducir dirección de correo electrónico: ")
+        label_input.grid(column=0, row=0, padx=5, pady=5)
+
+        entry_input = tk.Entry(ventana_input, width=35)
+        entry_input.grid(column=0, row=1, padx=10)
+        entry_input.focus()
+
+        boton_buscar = ttk.Button(ventana_input, text="Enviar", command=get_entry_data)
+        entry_input.bind("<Return>", lambda event: boton_buscar.invoke())
+        boton_buscar.grid(column=1, row=1)
+
+        boton_cancelar = ttk.Button(ventana_input, text="Cancelar", command=ventana_input.destroy)
+        entry_input.bind("<Escape>", lambda event: boton_cancelar.invoke())
+        boton_cancelar.grid(column=2, row=1)
+
+        ventana_input.wait_window()
+
+        return mail.get()
+
+    def validar_mail(self, correo_electronico):
+        # Expresión regular para comprobar la dirección de correo electrónico
+        patron = r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$'
+
+        # Comprobar si la dirección de correo electrónico es válida
+        if re.match(patron, correo_electronico):
+            return True
+        else:
+            messagebox.showerror("Error", "La dirección de correo electrónico no es válida.")
+            return False
+
 
 if __name__ == "__main__":
     root = tk.Tk()
+    if getattr(sys, 'frozen', False):
+        application_path = sys._MEIPASS
+    elif __file__:
+        application_path = os.path.dirname(__file__)
+    root.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
     app = App(root)
     root.mainloop()
