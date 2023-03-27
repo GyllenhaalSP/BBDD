@@ -1,5 +1,3 @@
-specpath=os.path.dirname(os.path.abspath(SPEC))
-
 # -*- mode: python ; coding: utf-8 -*-
 
 block_cipher = None
