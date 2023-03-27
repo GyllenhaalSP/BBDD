@@ -81,6 +81,18 @@ def mostrar_popup_bb_dd():
     messagebox.showerror("Error", "No se ha podido conectar con la base de datos.")
 
 
+def validar_mail(dir_email):
+    # Expresión regular para comprobar la dirección de correo electrónico
+    patron = r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$'
+
+    # Comprobar si la dirección de correo electrónico es válida
+    if re.match(patron, dir_email):
+        return True
+    else:
+        messagebox.showerror("Error", "La dirección de correo electrónico no es válida.")
+        return False
+
+
 class App:
     def __init__(self, app_root):
         self.menu = None
@@ -132,8 +144,8 @@ class App:
             pdf.generar_pdf()
             from configparser import ConfigParser
             config = ConfigParser()
-            config.read(os.path.join(application_path, 'config.ini'))
-            send_mail = Mailer('facturasalimentacionchen@gmail.com', config['password']['password'])
+            config.read(os.path.join(application_path, 'db_connection_config.ini'))
+            send_mail = Mailer('facturasalimentacionchen@gmail.com', config['pass']['password'])
             send_mail.enviar_email(mail, texto, n_fact, filename)
             pdf.eliminar_pdf()
             messagebox.showinfo("Información", "Correo enviado correctamente.")
@@ -308,7 +320,6 @@ class App:
             results = ejecutar_consulta(conn, consulta)
             archivo = generar_archivo(archivo, results, ['TOTAL', 'TOTAL CON IVA'], colalign=("right", "right"))
 
-
             abrir_archivo(archivo, texto)
 
             configurar_ventana(ventana, texto, 800, 700, 550, 50)
@@ -359,7 +370,7 @@ class App:
         # Función para obtener el mail introducido en el entry
         def get_entry_data():
             mail.set(entry_input.get())
-            if self.validar_mail(mail.get()):
+            if validar_mail(mail.get()):
                 messagebox.showinfo("Confirmación", "Pulsa aceptar para enviar el correo.")
                 ventana_input.destroy()
             else:
@@ -394,17 +405,6 @@ class App:
         ventana_input.wait_window()
 
         return mail.get()
-
-    def validar_mail(self, correo_electronico):
-        # Expresión regular para comprobar la dirección de correo electrónico
-        patron = r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$'
-
-        # Comprobar si la dirección de correo electrónico es válida
-        if re.match(patron, correo_electronico):
-            return True
-        else:
-            messagebox.showerror("Error", "La dirección de correo electrónico no es válida.")
-            return False
 
 
 if __name__ == "__main__":
