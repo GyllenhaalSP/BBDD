@@ -9,7 +9,7 @@ a = Analysis(
     ['App.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('SQL.ico', '.')],
     hiddenimports=['cryptography.hazmat.primitives.kdf.pbkdf2', 'secrets'],
     hookspath=[],
     hooksconfig={},
@@ -42,5 +42,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='oracle.ico',
+    icon='SQL.ico',
 )
