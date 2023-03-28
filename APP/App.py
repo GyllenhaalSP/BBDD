@@ -66,8 +66,8 @@ def escribir_archivo(temp_file, texto):
             texto.insert(tk.END, linea)
 
 
-def generar_archivo(archivo, results, headers, colalign=None):
-    return archivo + "\n" + tabulate(results, headers=headers, colalign=colalign) + "\n"
+def generar_archivo(archivo, results, headers, col_align=None):
+    return archivo + "\n" + tabulate(results, headers=headers, colalign=col_align) + "\n"
 
 
 def mostrar_popup_error(tipo):
@@ -127,8 +127,8 @@ class App:
         ]
 
         for i, (texto, comando) in enumerate(botones):
-            boton = ttk.Button(self.root, text=texto, command=comando)
-            boton.grid(column=i, row=2, sticky="nsew")
+            button = ttk.Button(self.root, text=texto, command=comando)
+            button.grid(column=i, row=2, sticky="nsew")
 
         correo = ttk.Button(self.root, text="Enviar factura por correo electrónico", command=self.enviar_factura)
         correo.grid(column=0, row=4, columnspan=4, sticky="nsew")
@@ -231,13 +231,13 @@ class App:
 
     def albaranes(self):
         conn = conectar()
-        albaran = self.pedir_input("Albarán", "A")
+        alb = self.pedir_input("Albarán", "A")
         ventana, texto = self.crear_ventana("Albarán")
         self.configurar_menu_contextual(ventana, texto)
         try:
             consulta = f"""SELECT N_ALB, TO_CHAR(FECHA_ALB, 'dd/mm/yyyy') 
             FROM CAB_ALB
-            WHERE UPPER(N_ALB) LIKE UPPER('{albaran}')
+            WHERE UPPER(N_ALB) LIKE UPPER('{alb}')
             ORDER BY N_ALB
             """
             results = ejecutar_consulta(conn, consulta)
@@ -247,19 +247,19 @@ class App:
                 return
             archivo = generar_archivo("", results, ['Nº ALBARÁN', 'FECHA ALBARÁN'])
 
-            consulta = query_cliente(albaran, "CAB_ALB", "A", "N_ALB")
+            consulta = query_cliente(alb, "CAB_ALB", "A", "N_ALB")
             results = ejecutar_consulta(conn, consulta)
             archivo = generar_archivo(archivo, results, ['NOMBRE CLIENTE'])
 
-            consulta = query_dir(albaran, "CAB_ALB", "A", "N_ALB")
+            consulta = query_dir(alb, "CAB_ALB", "A", "N_ALB")
             results = ejecutar_consulta(conn, consulta)
             archivo = generar_archivo(archivo, results, ['DIRECCIÓN', 'Nº', 'CP', 'PROVINCIA', 'CCAA'],
-                                      colalign=("left", "center", "center", "center", "center"))
+                                      col_align=("left", "center", "center", "center", "center"))
 
-            consulta = query_productos(albaran, "CAB_ALB", "L", "LIN_ALB")
+            consulta = query_productos(alb, "CAB_ALB", "L", "LIN_ALB")
             results = ejecutar_consulta(conn, consulta)
             archivo = generar_archivo(archivo, results, ['PRODUCTO', 'CANTIDAD', 'PRECIO UNITARIO'],
-                                      colalign=("left", "right", "right"))
+                                      col_align=("left", "right", "right"))
 
             abrir_archivo(archivo, texto)
 
@@ -279,7 +279,7 @@ class App:
         self.configurar_menu_contextual(ventana, texto)
 
         try:
-            consulta = f"""SELECT CF.N_FACT, CA.N_ALB, TO_CHAR(FECHA_FACT, 'dd/mm/yyyy') 
+            consulta = f"""SELECT DISTINCT CF.N_FACT, CA.N_ALB, TO_CHAR(FECHA_FACT, 'dd/mm/yyyy') 
             FROM CAB_FACT CF, CAB_ALB CA
             WHERE UPPER(CF.N_FACT) LIKE UPPER('{factura}')
             AND CF.N_FACT = CA.N_FACT
@@ -299,14 +299,14 @@ class App:
             consulta = query_dir(factura, "CAB_FACT", "", "")
             results = ejecutar_consulta(conn, consulta)
             archivo = generar_archivo(archivo, results, ['DIRECCIÓN', 'Nº', 'CP', 'PROVINCIA', 'CCAA'],
-                                      colalign=("left", "center", "center", "center", "center"))
+                                      col_align=("left", "center", "center", "center", "center"))
 
             consulta = query_factura(factura)
             results = ejecutar_consulta(conn, consulta)
             archivo = generar_archivo(archivo, results,
                                       ['PRODUCTO', 'PORCENTAJE DE IVA', 'CANTIDAD', 'PRECIO UNITARIO', 'PRECIO TOTAL',
                                        'PRECIO CON IVA'],
-                                      colalign=("left", "right", "right", "right", "right"))
+                                      col_align=("left", "right", "right", "right", "right"))
 
             consulta = f"""SELECT DISTINCT SUM(ROUND((P.PRECIO * LA.CANT), 2)) AS TOTAL,
                 SUM(ROUND(((P.PRECIO * LA.CANT) * I.IVA), 2)) AS "TOTAL CON IVA"
@@ -318,7 +318,7 @@ class App:
                 AND CA.N_ALB = LA.N_ALB            
                 """
             results = ejecutar_consulta(conn, consulta)
-            archivo = generar_archivo(archivo, results, ['TOTAL', 'TOTAL CON IVA'], colalign=("right", "right"))
+            archivo = generar_archivo(archivo, results, ['TOTAL', 'TOTAL CON IVA'], col_align=("right", "right"))
 
             abrir_archivo(archivo, texto)
 
@@ -334,7 +334,8 @@ class App:
         finally:
             conn.desconectar()
 
-    def pedir_input(self, tipo_busqueda, letra):
+    def pedir_input(self, search_type, letra):
+        # search_type: Pedido, Albarán, Factura
         # Función para obtener el número introducido en el entry
         def get_entry_data():
             num.set(entry_input.get())
@@ -350,17 +351,17 @@ class App:
         num = tk.StringVar()
 
         # Crear label y entry para el número de pedido
-        label_input = ttk.Label(ventana_input, text=f"Introducir número de {tipo_busqueda} (XXX): ")
+        label_input = ttk.Label(ventana_input, text=f"Introducir número de {search_type} (XXX): ")
         label_input.grid(column=0, row=0, padx=5, pady=5)
 
         entry_input = tk.Entry(ventana_input,
-                               width=len(f"Introducir número de {tipo_busqueda} (XXX): ") - 10)
+                               width=len(f"Introducir número de {search_type} (XXX): ") - 10)
         entry_input.grid(column=0, row=1)
         entry_input.focus()
 
-        boton_buscar = ttk.Button(ventana_input, text="Buscar", command=get_entry_data)
-        entry_input.bind("<Return>", lambda event: boton_buscar.invoke())
-        boton_buscar.grid(column=1, row=1)
+        search_button = ttk.Button(ventana_input, text="Buscar", command=get_entry_data)
+        entry_input.bind("<Return>", lambda event: search_button.invoke())
+        search_button.grid(column=1, row=1)
 
         ventana_input.wait_window()
 
@@ -394,13 +395,13 @@ class App:
         entry_input.grid(column=0, row=1, padx=10)
         entry_input.focus()
 
-        boton_buscar = ttk.Button(ventana_input, text="Enviar", command=get_entry_data)
-        entry_input.bind("<Return>", lambda event: boton_buscar.invoke())
-        boton_buscar.grid(column=1, row=1)
+        search_button = ttk.Button(ventana_input, text="Enviar", command=get_entry_data)
+        entry_input.bind("<Return>", lambda event: search_button.invoke())
+        search_button.grid(column=1, row=1)
 
-        boton_cancelar = ttk.Button(ventana_input, text="Cancelar", command=ventana_input.destroy)
-        entry_input.bind("<Escape>", lambda event: boton_cancelar.invoke())
-        boton_cancelar.grid(column=2, row=1)
+        cancel_button = ttk.Button(ventana_input, text="Cancelar", command=ventana_input.destroy)
+        entry_input.bind("<Escape>", lambda event: cancel_button.invoke())
+        cancel_button.grid(column=2, row=1)
 
         ventana_input.wait_window()
 
