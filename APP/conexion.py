@@ -3,6 +3,8 @@
 """
 import configparser
 import sys
+from tkinter import messagebox
+
 import oracledb
 
 
@@ -72,6 +74,9 @@ def read_db_config(config_file, section='default'):
         for item in items:
             db_config[item[0]] = item[1]
     else:
+        messagebox.showerror('Error fatal', f'La sección "{section}" no se ha encontrado en el archivo {config_file}'
+                                            f'.\nCompruebe que el archivo existe en el directorio raíz y que está '
+                                            f'correctamente formado.')
         raise Exception(f'Section {section} not found in the {config_file} file')
 
     return db_config
