@@ -2,7 +2,8 @@
  By GyllenhaalSP mar 2023 @ https://github.com/GyllenhaalSP.
 """
 
-# Queries de SQL para las consultas de la aplicación
+# Queries de SQL para las consultas de la aplicación.
+
 
 def query_lista_productos():
     return f"""SELECT COD_PROD, NOM_PROD, I.IVA_POR AS IVA, CONCAT(TO_CHAR(PRECIO, '0.99'), ' EUROS') AS PRECIO 
