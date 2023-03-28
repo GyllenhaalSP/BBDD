@@ -6,10 +6,11 @@ from fpdf import FPDF
 
 
 class PDFGenerator:
-    def __init__(self, data, filename="tabla.pdf", title="Tabla"):
+    def __init__(self, data, filename="tabla.pdf", title="Tabla", mail=None):
         self.data = data
         self.filename = filename
         self.title = title
+        self.mail = mail
 
     def generar_pdf(self):
         # Crear objeto FPDF
@@ -17,8 +18,10 @@ class PDFGenerator:
         pdf.add_page()
 
         # Agregar título
-        pdf.set_font("Courier", size=14)
+        pdf.set_font("Courier", size=16)
         pdf.cell(200, 10, txt=self.title, ln=1, align="C")
+        pdf.set_font("Courier", size=16, style="B")
+        pdf.cell(200, 10, txt=self.mail, ln=1, align="C")
 
         # Agregar datos
         pdf.set_font("Courier", size=9)
