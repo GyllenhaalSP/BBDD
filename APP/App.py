@@ -5,7 +5,6 @@ import os
 import re
 import tempfile
 import tkinter as tk
-from tkinter import messagebox
 from tkinter import ttk
 
 from tabulate import tabulate
@@ -40,15 +39,16 @@ def create_input_window(titulo, etiqueta, validation=None):
         valor.set(entry_input.get())
         if validation is None or validation(valor.get()):
             ventana_input.destroy()
+            return None
         else:
-            messagebox.showerror("Error", "La dirección de correo electrónico no es válida.")
+            messagebox.showerror("Error", "La dirección de correo electrónico introducida no es válida.")
             pedir_mail()
 
     ventana_input = tk.Toplevel()
     ventana_input.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
     ventana_input.title(titulo)
     ventana_input.resizable(False, False)
-    ventana_input.geometry(f"{400}x{60}+{100}+{50}")
+    ventana_input.geometry(f"{400}x{60}+{100}+{290}")
 
     valor = tk.StringVar()
 
@@ -88,7 +88,7 @@ def generate_mail(texto, n_fact, filename):
     mail = pedir_mail()
     if mail:
         from generador_pdf import PDFGenerator
-        pdf = PDFGenerator(texto, filename=filename, title=f"Factura {n_fact} para {mail}")
+        pdf = PDFGenerator(texto, filename=filename, title=f"Factura {n_fact} para", mail=f"{mail}")
         pdf.generar_pdf()
         from configparser import ConfigParser
         config = ConfigParser()
@@ -132,12 +132,12 @@ def pedir_input(search_type, letra):
 
 
 def pedir_mail():
-    titulo = "Introducir dirección de correo electrónico: "
+    titulo = "Introducción de datos"
     etiqueta = "Introducir dirección de correo electrónico: "
     validation = lambda valid_value: validar_mail(valid_value)
     valor = create_input_window(titulo, etiqueta, validation)
 
-    if valor is None:
+    if valor is None or valor == "":
         return None
 
     messagebox.showinfo("Confirmación", "Pulsa aceptar para enviar el correo.")
@@ -156,12 +156,16 @@ def validar_mail(dir_email):
         return False
 
 
-def window_config(ventana, texto, ancho, alto, x, y):
+def window_config(ventana, texto, ancho, alto, x, y, padding=False):
     ventana.geometry(f"{ancho}x{alto}+{x}+{y}")
     button = ttk.Button(ventana, text="Cerrar", command=ventana.destroy)
     button.grid(row=1, column=0, sticky="s")
     ventana.bind("<Return>", lambda event=None: button.invoke())
     texto.config(state='disabled')
+    if padding:
+        texto.config(padx=80, pady=20)
+    else:
+        texto.config(padx=20, pady=20)
     ventana.grid_columnconfigure(0, weight=1)
     ventana.grid_rowconfigure(0, weight=1)
 
@@ -178,11 +182,12 @@ class App:
         self.root = app_root
         self.root.configure(borderwidth=0, highlightthickness=0)
         app_root.title("Gestor de pedidos, albaranes y facturas")
-        app_root.geometry("400x200+100+50")
+        app_root.geometry("400x200+100+25")
         app_root.resizable(False, False)
 
         self.configure_root_grid()
         self.crear_widgets()
+        self.crear_menu()
 
     def configurar_menu_contextual(self, ventana, texto):
         self.menu = tk.Menu(ventana, tearoff=0)
@@ -212,6 +217,23 @@ class App:
         cerrar = ttk.Button(self.root, text="Cerrar", command=self.root.destroy)
         cerrar.grid(column=0, row=5, columnspan=4, sticky="nsew")
 
+    def crear_menu(self):
+        # Crear barra de menú
+        menu_bar = tk.Menu(self.root)
+
+        # Crear menú Archivo
+        archivo_menu = tk.Menu(menu_bar, tearoff=0)
+        archivo_menu.add_command(label="Salir", command=self.root.destroy)
+        menu_bar.add_cascade(label="Archivo", menu=archivo_menu)
+
+        # Crear menú Ayuda
+        ayuda_menu = tk.Menu(menu_bar, tearoff=0)
+        ayuda_menu.add_command(label="Acerca de", command=self.mostrar_acerca_de)
+        menu_bar.add_cascade(label="Ayuda", menu=ayuda_menu)
+
+        # Añadir barra de menú a la ventana principal
+        self.root.config(menu=menu_bar)
+
     def crear_ventana(self, titulo):
         ventana = tk.Toplevel(self.root)
         ventana.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
@@ -221,6 +243,44 @@ class App:
         texto.grid(row=0, column=0, sticky="nsew")
         ventana.focus()
         return ventana, texto
+
+    def mostrar_acerca_de(self):
+        from PIL import Image, ImageTk
+        acerca_de = tk.Toplevel(self.root)
+        acerca_de.title("Acerca de")
+        acerca_de.geometry("450x330+520+50")
+        acerca_de.resizable(False, False)
+        acerca_de.focus()
+
+        image = Image.open(os.path.join(application_path, 'chen_logo_trans.png'))
+        image_resized = image.resize((60, 60), Image.LANCZOS)
+        photo = ImageTk.PhotoImage(image_resized)
+
+        titulo = tk.Label(acerca_de, text="\nGESTOR DE PEDIDOS, ALBARANES Y FACTURAS", font=("Calibri", 16, "bold"))
+        titulo.pack()
+
+        logo = tk.Label(acerca_de, image=photo)
+        logo.pack(fill="both", expand=True)
+
+        logo.image = photo
+
+        titulo2 = tk.Label(acerca_de, text="ALIMENTACIÓN CHEN", font=("Calibri", 20, "bold"))
+        titulo2.pack()
+
+        description = tk.Label(acerca_de, text="\nEsta es una aplicación para la gestión de la base de datos de la "
+                                               "empresa <<Alimentación Chen>> dentro del proyecto final de la asignatura"
+                                               " Bases de Datos. \n", wraplength=350)
+        description.pack()
+
+        autor = tk.Label(acerca_de, text="Daniel Alonso Lázaro @ https://github.com/GyllenhaalSP.")
+        autor.pack()
+
+        where = tk.Label(acerca_de, text="IES Juan de la Cierva - DAW1V - 2022/2023 - BB.DD.")
+        where.pack()
+
+        cerrar = ttk.Button(acerca_de, text="Cerrar", command=acerca_de.destroy)
+        acerca_de.bind("<Return>", lambda event=None: cerrar.invoke())
+        cerrar.pack(pady=10)
 
     def crear_widgets(self):
         label = ttk.Label(
@@ -243,11 +303,11 @@ class App:
             ventana, texto = self.crear_ventana("Lista de productos")
             self.configurar_menu_contextual(ventana, texto)
 
-            archivo = tabulate(results, headers=columnas) + "\n\n"
+            archivo = tabulate(results, headers=columnas)
 
             open_file(archivo, texto)
 
-            window_config(ventana, texto, 400, 650, 600, 25)
+            window_config(ventana, texto, 500, 680, 510, 25, True)
         except oracledb.DatabaseError:
             mostrar_popup_bb_dd()
         finally:
@@ -285,7 +345,7 @@ class App:
 
             open_file(archivo, texto)
 
-            window_config(ventana, texto, 500, 600, 600, 50)
+            window_config(ventana, texto, 500, 600, 510, 25)
         except IndexError:
             mostrar_popup_error("pedido")
             ventana.destroy()
@@ -326,7 +386,7 @@ class App:
 
             open_file(archivo, texto)
 
-            window_config(ventana, texto, 500, 600, 600, 50)
+            window_config(ventana, texto, 500, 600, 510, 25)
         except IndexError:
             ventana.destroy()
             mostrar_popup_error("albarán")
@@ -385,7 +445,7 @@ class App:
 
             open_file(archivo, texto)
 
-            window_config(ventana, texto, 800, 700, 550, 50)
+            window_config(ventana, texto, 800, 760, 510, 25)
 
             if mail:
                 generate_mail(archivo, factura, f"Factura {factura}.pdf")
