@@ -1,7 +1,6 @@
 """
  By GyllenhaalSP mar 2023 @ https://github.com/GyllenhaalSP.
 """
-import os
 import re
 import tempfile
 import tkinter as tk
@@ -268,8 +267,8 @@ class App:
         titulo2.pack()
 
         description = tk.Label(acerca_de, text="\nEsta es una aplicación para la gestión de la base de datos de la "
-                                               "empresa <<Alimentación Chen>> dentro del proyecto final de la asignatura"
-                                               " Bases de Datos. \n", wraplength=350)
+                                               "empresa <<Alimentación Chen>> dentro del proyecto final de la "
+                                               "asignatura Bases de Datos. \n", wraplength=350)
         description.pack()
 
         autor = tk.Label(acerca_de, text="Daniel Alonso Lázaro @ https://github.com/GyllenhaalSP.")
