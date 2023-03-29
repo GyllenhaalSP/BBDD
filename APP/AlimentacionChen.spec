@@ -5,10 +5,10 @@ block_cipher = None
 
 
 a = Analysis(
-    ['App.py'],
+    ['AlimentacionChen.py'],
     pathex=[],
     binaries=[],
-    datas=[('SQL.ico', '.'), ('chen_logo_trans.png', '.'), ('db_connection_config.ini', '.')],
+    datas=[('images/SQL.ico', '.'), ('images/chen_logo_trans.png', '.'), ('db_connection_config.ini', '.')],
     hiddenimports=['cryptography.hazmat.primitives.kdf.pbkdf2'],
     hookspath=[],
     hooksconfig={},
@@ -28,7 +28,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='App',
+    name='AlimentacionChen',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -41,6 +41,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon = 'SQL.ico',
+    icon = 'images/SQL.ico',
     version = 'version.rc',
 )
