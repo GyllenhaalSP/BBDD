@@ -44,3 +44,4 @@ class Mailer:
         except Exception as e:
             with open("log.txt", "a") as log_file:
                 log_file.write(f"Error al enviar correo electrónico: {e}\n")
+                log_file.close()
