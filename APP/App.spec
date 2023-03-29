@@ -41,4 +41,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon = 'SQL.ico',
+    version = 'version.rc',
 )
