@@ -36,15 +36,19 @@ def copy_to_clipboard(texto):
 def create_input_window(titulo, etiqueta, validation=None):
     def get_entry_data():
         valor.set(entry_input.get())
+        if valor.get() == "":
+            messagebox.showerror("Error", "No se ha introducido ningún valor.")
+            return None
         if validation is None or validation(valor.get()):
             ventana_input.destroy()
             return None
         else:
             messagebox.showerror("Error", "La dirección de correo electrónico introducida no es válida.")
+            ventana_input.destroy()
             pedir_mail()
 
     ventana_input = tk.Toplevel()
-    ventana_input.iconbitmap(default=os.path.join(application_path, 'images/SQL.ico'))
+    ventana_input.iconbitmap(default=os.path.join(application_path, 'images\\SQL.ico'))
     ventana_input.title(titulo)
     ventana_input.resizable(False, False)
     ventana_input.geometry(f"{400}x{60}+{100}+{290}")
@@ -124,7 +128,7 @@ def pedir_input(search_type, letra):
     etiqueta = f"Introducir número de {search_type} (XXX): "
     valor = create_input_window(titulo, etiqueta)
 
-    if valor is None:
+    if valor == f"-{letra}" or valor == "":
         return None
 
     return f"{valor}-{letra}"
@@ -235,7 +239,7 @@ class App:
 
     def crear_ventana(self, titulo):
         ventana = tk.Toplevel(self.root)
-        ventana.iconbitmap(default=os.path.join(application_path, 'images/SQL.ico'))
+        ventana.iconbitmap(default=os.path.join(application_path, 'images\\SQL.ico'))
         ventana.title(titulo)
         ventana.resizable(False, False)
         texto = tk.Text(ventana)
@@ -251,7 +255,7 @@ class App:
         acerca_de.resizable(False, False)
         acerca_de.focus()
 
-        image = Image.open(os.path.join(application_path, 'chen_logo_trans.png'))
+        image = Image.open(os.path.join(application_path, 'images\\chen_logo_trans.png'))
         image_resized = image.resize((60, 60), Image.LANCZOS)
         photo = ImageTk.PhotoImage(image_resized)
 
@@ -315,6 +319,8 @@ class App:
     def pedidos(self):
         conn = connect()
         num_pedido = pedir_input("Pedido", "P")
+        if num_pedido == "-P" or num_pedido is None:
+            return
         ventana, texto = self.crear_ventana("Pedido")
         self.configurar_menu_contextual(ventana, texto)
         try:
@@ -354,6 +360,8 @@ class App:
     def albaranes(self):
         conn = connect()
         alb = pedir_input("Albarán", "A")
+        if alb == "-A" or alb is None:
+            return
         ventana, texto = self.crear_ventana("Albarán")
         self.configurar_menu_contextual(ventana, texto)
         try:
@@ -397,6 +405,8 @@ class App:
         if mail:
             messagebox.showinfo("Facturas", "Introducir el número de factura y seguidamente el mail.")
         factura = pedir_input("Factura", "F")
+        if factura == "-F" or factura is None:
+            return
         ventana, texto = self.crear_ventana("Factura")
         self.configurar_menu_contextual(ventana, texto)
 
@@ -463,6 +473,6 @@ if __name__ == "__main__":
         application_path = sys._MEIPASS
     elif __file__:
         application_path = os.path.dirname(__file__)
-    root.iconbitmap(default=os.path.join(application_path, 'images/SQL.ico'))
+    root.iconbitmap(default=os.path.join(application_path, 'images\\SQL.ico'))
     app = App(root)
     root.mainloop()
