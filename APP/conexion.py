@@ -2,6 +2,7 @@
  By GyllenhaalSP mar 2023 @ https://github.com/GyllenhaalSP.
 """
 import configparser
+import os
 import sys
 from tkinter import messagebox
 
@@ -10,8 +11,12 @@ import oracledb
 
 class Conexion:
     def __init__(self):
+        if getattr(sys, 'frozen', False):
+            application_path = sys._MEIPASS
+        elif __file__:
+            application_path = os.path.dirname(__file__)
         oracledb.init_oracle_client()
-        self.config = read_db_config('db_connection_config.ini', 'default')
+        self.config = read_db_config(os.path.join(application_path, 'db_connection_config.ini'), 'default')
         try:
             show_message("Conectando a la BB.DD...", 'info', 1500)
             self.dsn = oracledb.makedsn(self.config['ip'], int(self.config['port']), self.config['service-name'])
@@ -34,7 +39,6 @@ class Conexion:
                     self.cur = self.conn.cursor()
                 except oracledb.DatabaseError:
                     show_message("Imposible conectar a la BB.DD.", 'error', 3000)
-
                     sys.exit()
 
     def desconectar(self):
