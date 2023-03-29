@@ -44,7 +44,7 @@ def create_input_window(titulo, etiqueta, validation=None):
             pedir_mail()
 
     ventana_input = tk.Toplevel()
-    ventana_input.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
+    ventana_input.iconbitmap(default=os.path.join(application_path, 'images/SQL.ico'))
     ventana_input.title(titulo)
     ventana_input.resizable(False, False)
     ventana_input.geometry(f"{400}x{60}+{100}+{290}")
@@ -235,7 +235,7 @@ class App:
 
     def crear_ventana(self, titulo):
         ventana = tk.Toplevel(self.root)
-        ventana.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
+        ventana.iconbitmap(default=os.path.join(application_path, 'images/SQL.ico'))
         ventana.title(titulo)
         ventana.resizable(False, False)
         texto = tk.Text(ventana)
@@ -463,6 +463,6 @@ if __name__ == "__main__":
         application_path = sys._MEIPASS
     elif __file__:
         application_path = os.path.dirname(__file__)
-    root.iconbitmap(default=os.path.join(application_path, 'SQL.ico'))
+    root.iconbitmap(default=os.path.join(application_path, 'images/SQL.ico'))
     app = App(root)
     root.mainloop()
