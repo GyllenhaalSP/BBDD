@@ -24,14 +24,14 @@ class Conexion:
             self.cur = self.conn.cursor()
         except oracledb.DatabaseError:
             show_message("Imposible conectar a la BB.DD.\nReintentando en 20 segundos...", 'error', 2000)
-            self.config = read_db_config("db_connection_config.ini", 'try1')
+            self.config = read_db_config(os.path.join(application_path, 'db_connection_config.ini'), 'try1')
             try:
                 self.dsn = oracledb.makedsn(self.config['ip'], int(self.config['port']), self.config['service-name'])
                 self.conn = oracledb.connect(self.config['user-login'] + self.dsn)
                 self.cur = self.conn.cursor()
             except oracledb.DatabaseError:
                 show_message("Imposible conectar a la BB.DD.\nReintentando en 20 segundos...", 'error', 2000)
-                self.config = read_db_config("db_connection_config.ini", 'try2')
+                self.config = read_db_config(os.path.join(application_path, 'db_connection_config.ini'), 'try2')
                 try:
                     self.dsn = oracledb.makedsn(self.config['ip'], int(self.config['port']),
                                                 self.config['service-name'])
