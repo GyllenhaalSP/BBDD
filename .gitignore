@@ -4,3 +4,4 @@
 /APP/db_connection_config.ini
 /APP/distOl/
 /APP/App_fixed.spec
+/__pycache__/
