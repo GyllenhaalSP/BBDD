@@ -5,3 +5,4 @@
 /APP/App_fixed.spec
 /__pycache__/
 *.pyc
+/venv/
